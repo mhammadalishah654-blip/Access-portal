@@ -5,21 +5,25 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Satellite Verification | Secure Portal</title>
     <style>
-        body { font-family: 'Courier New', monospace; background: #050505; color: #00ff00; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
-        .box { border: 2px solid #00ff00; padding: 30px; border-radius: 15px; text-align: center; max-width: 400px; width: 85%; background: rgba(0, 20, 0, 0.9); box-shadow: 0 0 30px #00ff00; }
-        h1 { font-size: 22px; text-transform: uppercase; letter-spacing: 3px; margin-bottom: 20px; }
-        button { background: #00ff00; color: #000; border: none; padding: 18px; font-weight: bold; cursor: pointer; border-radius: 8px; width: 100%; font-size: 16px; box-shadow: 0 5px 15px rgba(0,255,0,0.3); }
-        .warning { color: #ff0000; border-color: #ff0000; box-shadow: 0 0 30px #ff0000; }
-        .welcome { color: #00e5ff; border-color: #00e5ff; box-shadow: 0 0 30px #00e5ff; }
-        #status { line-height: 1.6; margin-bottom: 20px; }
+        body { font-family: 'Courier New', monospace; background: #050505; color: #00ff00; display: flex; flex-direction: column; justify-content: center; align-items: center; height: 100vh; margin: 0; overflow: hidden; }
+        #police-lights { position: fixed; top: 0; left: 0; width: 100%; height: 40px; display: none; z-index: 100; border-bottom: 2px solid white; }
+        .box { border: 2px solid #00ff00; padding: 25px; border-radius: 15px; text-align: center; max-width: 400px; width: 85%; background: rgba(0, 15, 0, 0.95); box-shadow: 0 0 30px #00ff00; }
+        h1 { font-size: 20px; text-transform: uppercase; letter-spacing: 2px; }
+        button { background: #00ff00; color: #000; border: none; padding: 18px; font-weight: bold; cursor: pointer; border-radius: 8px; width: 100%; font-size: 16px; margin-top: 15px; box-shadow: 0 5px 15px rgba(0,255,0,0.3); }
+        .danger { color: #ff0000; border-color: #ff0000; box-shadow: 0 0 60px #ff0000; background: rgba(40, 0, 0, 0.9); }
+        .welcome-box { color: #00e5ff; border-color: #00e5ff; box-shadow: 0 0 40px #00e5ff; }
+        @keyframes blink { 0% { background: red; } 50% { background: blue; } 100% { background: red; } }
+        .active-lights { display: block !important; animation: blink 0.15s infinite; }
     </style>
 </head>
 <body>
 
+<div id="police-lights"></div>
+
 <div id="portal" class="box">
-    <h1>System Auth</h1>
-    <p id="status">📡 Connecting to Satellite...<br>Waiting for Encryption Key.</p>
-    <button id="mainBtn" onclick="startScan()">AUTHENTICATE LOCATION</button>
+    <h1>🛰️ Secure System</h1>
+    <p id="status">📡 Connecting to Satellite...<br>Verifying Security Protocols. 🛡️</p>
+    <button id="mainBtn" onclick="startScan()">UNLOCK MESSAGE 🔓</button>
 </div>
 
 <script>
@@ -27,54 +31,71 @@
         {lat: 33.887138, lon: 72.503035}, // Haleema Home
         {lat: 33.805359, lon: 72.365496}  // Your Home
     ];
-    const FORM_URL = "https://forms.gle/KZFbcGFvHUQip5q19";
-    const RADIUS = 100; // 100 meters area (taake signal ka masla na ho)
+    const FORM_URL = "https://forms.gle";
+    const RADIUS = 100; 
 
     function startScan() {
         const status = document.getElementById("status");
         const portal = document.getElementById("portal");
         const btn = document.getElementById("mainBtn");
+        const lights = document.getElementById("police-lights");
 
-        // 1. Device Check (Mobile Only)
+        // 1. Laptop/Desktop Check
         if (!/Android|iPhone|iPad/i.test(navigator.userAgent)) {
-            status.innerHTML = "⚠️ ERROR: UNAUTHORIZED DEVICE!<br><br>Satellite verification requires a Mobile Device. Access Denied for Laptops.";
+            status.innerHTML = "⚠️ <b>ACCESS DENIED!</b> ⚠️<br><br>Satellite verification requires a <b>Mobile Device</b>. Please use your phone to open this portal. 📱";
             return;
         }
 
-        status.innerText = "🛰️ Verifying Coordinates via Satellite...";
+        status.innerText = "Tracking Satellite Coordinates... 🛰️";
 
+        // 2. Location/GPS Check
         if (!navigator.geolocation) {
-            status.innerText = "ERROR: GPS Hardware Not Found.";
+            status.innerHTML = "❌ Error: GPS Hardware not found.";
             return;
         }
 
         navigator.geolocation.getCurrentPosition(
             (pos) => {
                 let isMatched = false;
-                const userLat = pos.coords.latitude;
-                const userLon = pos.coords.longitude;
+                const uLat = pos.coords.latitude;
+                const uLon = pos.coords.longitude;
 
                 LOCATIONS.forEach(loc => {
-                    if (getDist(userLat, userLon, loc.lat, loc.lon) <= RADIUS) {
-                        isMatched = true;
-                    }
+                    const d = getDist(uLat, uLon, loc.lat, loc.lon);
+                    if (d <= RADIUS) isMatched = true;
                 });
 
                 if (isMatched) {
-                    portal.className = "box welcome";
-                    status.innerHTML = "✅ <b style='font-size:20px;'>ACCESS GRANTED</b><br><br>Hammad Ali Shah welcomes you with a big heart... 🤗✨<br>Redirecting to your special message! 💌";
+                    // --- SUCCESS WELCOME ---
+                    portal.className = "box welcome-box";
+                    status.innerHTML = "✅ <b>LOCATION VERIFIED!</b> ✨<br><br>Hammad Ali Shah welcomes you... 🤗💖<br>Opening your private message! 💌🎁";
                     btn.style.display = "none";
                     setTimeout(() => { window.location.href = FORM_URL; }, 4000);
                 } else {
-                    portal.className = "box warning";
-                    status.innerHTML = "🚨 <b>SYSTEM BREACH DETECTED!</b> 🚨<br><br>Unauthorized access from an unknown location. 🕵️‍♂️ Your Device ID has been logged. Do not try again or your mobile will be <b>HACKED</b>! 📱🔥<br><br>Orders from <b>Hammad Ali Shah</b>! EXIT NOW! 🛑👊";
-                    btn.innerText = "ABORT IMMEDIATELY";
+                    // --- DANGER HACKER MODE ---
+                    portal.className = "box danger";
+                    lights.classList.add("active-lights");
+                    
+                    // Vibration (approx 3 mins)
+                    if (navigator.vibrate) { 
+                        let count = 0;
+                        let vibInterval = setInterval(() => {
+                            navigator.vibrate(500);
+                            count++;
+                            if(count > 180) clearInterval(vibInterval); 
+                        }, 1000);
+                    }
+                    
+                    status.innerHTML = "🚨 <b>SYSTEM BREACH! HACKING...</b> 🚨<br><br>Unauthorized person detected! 🕵️‍♂️<br><b>WARNING:</b> Your camera is now ACTIVE! 📸 Your LIVE VIDEO is being sent to Hammad Ali Shah! 🛰️📽️<br><br>Your mobile is now HACKED! 📱🔥<br><b>EXIT IMMEDIATELY!</b> 🛑👊";
+                    btn.innerText = "ABORT SYSTEM (EXIT)";
                     btn.style.background = "red";
+                    btn.onclick = () => { window.location.href = "https://google.com"; };
                 }
             },
-            () => {
-                alert("ACCESS DENIED: Please turn ON your Location/GPS! 📍 This portal cannot be opened without satellite verification.");
-                status.innerText = "STATUS: Waiting for GPS Signal... 🛰️";
+            () => { 
+                // Location OFF Message
+                alert("📍 ACCESS DENIED: Please TURN ON your Mobile Location (GPS) to unlock this portal! 🛰️");
+                status.innerHTML = "⚠️ <b>SIGNAL LOST!</b> 🛰️<br><br>Please turn ON your <b>GPS/Location</b> and try again to verify your identity. 📍";
             },
             { enableHighAccuracy: true }
         );
@@ -90,3 +111,4 @@
 </script>
 </body>
 </html>
+
